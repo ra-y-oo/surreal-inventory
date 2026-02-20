@@ -1,0 +1,5 @@
+"""
+Procfile for Render deployment
+Run the Flask app using Gunicorn
+"""
+web: gunicorn app:app

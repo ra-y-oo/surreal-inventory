@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management System - Phone & Accessories Store</title>
+    <style>
+        /* ============= RESET & GLOBALS ============= */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* ============= HEADER ============= */
+        header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        /* ============= STATUS INDICATORS ============= */
+        .status-indicator {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 12px;
+            background: #f0f0f0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .status-indicator.loading::after {
+            content: '';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+
+        /* ============= FORMS SECTION ============= */
+        .forms-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-card h2 {
+            color: #667eea;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.95rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-delete {
+            background: #e74c3c;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            width: auto;
+            margin-top: 0;
+        }
+
+        .btn-delete:hover {
+            background: #c0392b;
+        }
+
+        /* ============= ERROR MESSAGES ============= */
+        .error-message {
+            color: #e74c3c;
+            margin-top: 10px;
+            padding: 10px;
+            background: #fadbd8;
+            border-left: 4px solid #e74c3c;
+            border-radius: 4px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ============= SUCCESS MESSAGE ============= */
+        .success-message {
+            color: #27ae60;
+            padding: 10px;
+            background: #d5f4e6;
+            border-left: 4px solid #27ae60;
+            border-radius: 4px;
+            display: none;
+            margin-bottom: 15px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        /* ============= INVENTORY SECTION ============= */
+        .inventory-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            color: #667eea;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        /* ============= TABLES ============= */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        thead {
+            background: #f8f9fa;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #ddd;
+            font-size: 0.95rem;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.95rem;
+        }
+
+        tbody tr {
+            transition: background 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .price-cell, .quantity-cell, .total-cell {
+            text-align: right;
+            font-weight: 500;
+        }
+
+        .stock-value {
+            color: #27ae60;
+            font-weight: 600;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+            font-size: 1.1rem;
+        }
+
+        /* ============= SUMMARY SECTION ============= */
+        .summary-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+        }
+
+        .summary-title {
+            font-size: 1.5rem;
+            margin-bottom: 25px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .summary-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .summary-card h3 {
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .summary-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        /* ============= MOBILE RESPONSIVE ============= */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .forms-section {
+                grid-template-columns: 1fr;
+            }
+
+            .form-card {
+                padding: 20px;
+            }
+
+            .form-card h2 {
+                font-size: 1.3rem;
+            }
+
+            table {
+                font-size: 0.85rem;
+            }
+
+            th, td {
+                padding: 12px 8px;
+            }
+
+            .btn-delete {
+                padding: 6px 10px;
+                font-size: 0.75rem;
+            }
+
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-value {
+                font-size: 1.5rem;
+            }
+
+            .section-title {
+                font-size: 1.3rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            header {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .form-card {
+                padding: 15px;
+            }
+
+            .form-card h2 {
+                font-size: 1.1rem;
+            }
+
+            table {
+                font-size: 0.8rem;
+            }
+
+            th, td {
+                padding: 10px 5px;
+            }
+
+            button {
+                padding: 10px;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* ============= LOADING SKELETON ============= */
+        .loading-skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            height: 20px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+
+        @keyframes loading {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <header>
+            <h1>📱 Inventory Management</h1>
+            <p class="subtitle">Phone & Accessories Store</p>
+            <div class="status-indicator" id="status">
+                Connecting to server<span class="spinner"></span>
+            </div>
+        </header>
+
+        <!-- FORMS SECTION -->
+        <div class="forms-section">
+            <!-- Add Phone Form -->
+            <div class="form-card">
+                <h2>📱 Add Phone</h2>
+                <div class="success-message" id="phoneSuccess">Successfully added phone!</div>
+                <form id="phoneForm">
+                    <div class="form-group">
+                        <label for="phoneModel">Phone Model *</label>
+                        <input type="text" id="phoneModel" placeholder="e.g., iPhone 15 Pro" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="phonePrice">Price (KSh) *</label>
+                        <input type="number" id="phonePrice" placeholder="e.g., 120000" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="phoneQuantity">Quantity *</label>
+                        <input type="number" id="phoneQuantity" placeholder="e.g., 10" min="0" step="1" required>
+                    </div>
+                    <button type="submit">Add Phone</button>
+                    <div class="error-message" id="phoneError"></div>
+                </form>
+            </div>
+
+            <!-- Add Accessory Form -->
+            <div class="form-card">
+                <h2>🎧 Add Accessory</h2>
+                <div class="success-message" id="accessorySuccess">Successfully added accessory!</div>
+                <form id="accessoryForm">
+                    <div class="form-group">
+                        <label for="accessoryName">Accessory Name *</label>
+                        <input type="text" id="accessoryName" placeholder="e.g., USB-C Cable" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="accessoryPrice">Price (KSh) *</label>
+                        <input type="number" id="accessoryPrice" placeholder="e.g., 500" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="accessoryQuantity">Quantity *</label>
+                        <input type="number" id="accessoryQuantity" placeholder="e.g., 50" min="0" step="1" required>
+                    </div>
+                    <button type="submit">Add Accessory</button>
+                    <div class="error-message" id="accessoryError"></div>
+                </form>
+            </div>
+        </div>
+
+        <!-- STOCK SUMMARY SECTION -->
+        <div class="summary-section">
+            <div class="summary-title">📊 Stock Summary</div>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <h3>Phones Total</h3>
+                    <div class="summary-value" id="phonesTotal">KSh 0</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Accessories Total</h3>
+                    <div class="summary-value" id="accessoriesTotal">KSh 0</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Grand Total</h3>
+                    <div class="summary-value" id="grandTotal">KSh 0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- INVENTORY SECTION -->
+        <div class="inventory-section">
+            <div class="section-title">📋 Phones Inventory</div>
+            <table id="phonesTable">
+                <thead>
+                    <tr>
+                        <th>Model</th>
+                        <th class="price-cell">Price (KSh)</th>
+                        <th class="quantity-cell">Quantity</th>
+                        <th class="total-cell">Total Value (KSh)</th>
+                        <th style="text-align: center; width: 100px;">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="phonesList">
+                    <tr>
+                        <td colspan="5" class="empty-message">No phones added yet. Add your first phone above!</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="section-title">📋 Accessories Inventory</div>
+            <table id="accessoriesTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th class="price-cell">Price (KSh)</th>
+                        <th class="quantity-cell">Quantity</th>
+                        <th class="total-cell">Total Value (KSh)</th>
+                        <th style="text-align: center; width: 100px;">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="accessoriesList">
+                    <tr>
+                        <td colspan="5" class="empty-message">No accessories added yet. Add your first accessory above!</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // ============ CONFIG ============
+        // Change this to your backend URL when deploying
+        const API_BASE_URL = 'http://localhost:5000';
+        
+        // For production on Render, use:
+        // const API_BASE_URL = 'https://your-render-app.onrender.com';
+
+        // ============ UTILITY FUNCTIONS ============
+        function formatCurrency(value) {
+            return 'KSh ' + Number(value).toLocaleString('en-US', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
+        }
+
+        function showError(elementId, message) {
+            const errorEl = document.getElementById(elementId);
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
+            setTimeout(() => {
+                errorEl.classList.remove('show');
+            }, 5000);
+        }
+
+        function showSuccess(elementId) {
+            const successEl = document.getElementById(elementId);
+            successEl.classList.add('show');
+            setTimeout(() => {
+                successEl.classList.remove('show');
+            }, 3000);
+        }
+
+        async function wakeUpBackend() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                if (response.ok) {
+                    document.getElementById('status').innerHTML = '✓ Server connected';
+                    document.getElementById('status').style.color = '#27ae60';
+                    return true;
+                }
+            } catch (error) {
+                console.warn('Backend not available yet:', error);
+                document.getElementById('status').innerHTML = 'Waiting for server...';
+                document.getElementById('status').style.color = '#e74c3c';
+                return false;
+            }
+        }
+
+        // ============ PHONE OPERATIONS ============
+        async function addPhone(e) {
+            e.preventDefault();
+            
+            const model = document.getElementById('phoneModel').value.trim();
+            const price = parseFloat(document.getElementById('phonePrice').value);
+            const quantity = parseInt(document.getElementById('phoneQuantity').value);
+
+            if (!model || isNaN(price) || isNaN(quantity)) {
+                showError('phoneError', 'Please fill all fields correctly');
+                return;
+            }
+
+            if (price < 0 || quantity < 0) {
+                showError('phoneError', 'Price and quantity cannot be negative');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/phones`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model, price, quantity })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    showError('phoneError', error.error || 'Failed to add phone');
+                    return;
+                }
+
+                document.getElementById('phoneForm').reset();
+                showSuccess('phoneSuccess');
+                loadPhones();
+                loadSummary();
+            } catch (error) {
+                showError('phoneError', 'Error connecting to server');
+                console.error('Error:', error);
+            }
+        }
+
+        async function loadPhones() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/phones`);
+                if (!response.ok) throw new Error('Failed to load phones');
+                
+                const phones = await response.json();
+                const phonesList = document.getElementById('phonesList');
+
+                if (phones.length === 0) {
+                    phonesList.innerHTML = '<tr><td colspan="5" class="empty-message">No phones in inventory</td></tr>';
+                    return;
+                }
+
+                phonesList.innerHTML = phones.map(phone => `
+                    <tr>
+                        <td>${phone.model}</td>
+                        <td class="price-cell">${formatCurrency(phone.price)}</td>
+                        <td class="quantity-cell">${phone.quantity}</td>
+                        <td class="total-cell stock-value">${formatCurrency(phone.price * phone.quantity)}</td>
+                        <td style="text-align: center;">
+                            <button class="btn-delete" onclick="deletePhone(${phone.id})">Delete</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading phones:', error);
+            }
+        }
+
+        async function deletePhone(id) {
+            if (!confirm('Are you sure you want to delete this phone?')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/phones/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) throw new Error('Failed to delete phone');
+                
+                loadPhones();
+                loadSummary();
+            } catch (error) {
+                showError('phoneError', 'Error deleting phone');
+                console.error('Error:', error);
+            }
+        }
+
+        // ============ ACCESSORY OPERATIONS ============
+        async function addAccessory(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('accessoryName').value.trim();
+            const price = parseFloat(document.getElementById('accessoryPrice').value);
+            const quantity = parseInt(document.getElementById('accessoryQuantity').value);
+
+            if (!name || isNaN(price) || isNaN(quantity)) {
+                showError('accessoryError', 'Please fill all fields correctly');
+                return;
+            }
+
+            if (price < 0 || quantity < 0) {
+                showError('accessoryError', 'Price and quantity cannot be negative');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/accessories`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, price, quantity })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    showError('accessoryError', error.error || 'Failed to add accessory');
+                    return;
+                }
+
+                document.getElementById('accessoryForm').reset();
+                showSuccess('accessorySuccess');
+                loadAccessories();
+                loadSummary();
+            } catch (error) {
+                showError('accessoryError', 'Error connecting to server');
+                console.error('Error:', error);
+            }
+        }
+
+        async function loadAccessories() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/accessories`);
+                if (!response.ok) throw new Error('Failed to load accessories');
+                
+                const accessories = await response.json();
+                const accessoriesList = document.getElementById('accessoriesList');
+
+                if (accessories.length === 0) {
+                    accessoriesList.innerHTML = '<tr><td colspan="5" class="empty-message">No accessories in inventory</td></tr>';
+                    return;
+                }
+
+                accessoriesList.innerHTML = accessories.map(accessory => `
+                    <tr>
+                        <td>${accessory.name}</td>
+                        <td class="price-cell">${formatCurrency(accessory.price)}</td>
+                        <td class="quantity-cell">${accessory.quantity}</td>
+                        <td class="total-cell stock-value">${formatCurrency(accessory.price * accessory.quantity)}</td>
+                        <td style="text-align: center;">
+                            <button class="btn-delete" onclick="deleteAccessory(${accessory.id})">Delete</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading accessories:', error);
+            }
+        }
+
+        async function deleteAccessory(id) {
+            if (!confirm('Are you sure you want to delete this accessory?')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/accessories/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) throw new Error('Failed to delete accessory');
+                
+                loadAccessories();
+                loadSummary();
+            } catch (error) {
+                showError('accessoryError', 'Error deleting accessory');
+                console.error('Error:', error);
+            }
+        }
+
+        // ============ SUMMARY OPERATIONS ============
+        async function loadSummary() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/summary`);
+                if (!response.ok) throw new Error('Failed to load summary');
+                
+                const summary = await response.json();
+                
+                document.getElementById('phonesTotal').textContent = formatCurrency(summary.phones_total);
+                document.getElementById('accessoriesTotal').textContent = formatCurrency(summary.accessories_total);
+                document.getElementById('grandTotal').textContent = formatCurrency(summary.grand_total);
+            } catch (error) {
+                console.error('Error loading summary:', error);
+            }
+        }
+
+        // ============ INITIALIZATION ============
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Connect to backend
+            await wakeUpBackend();
+            
+            // Load initial data
+            loadPhones();
+            loadAccessories();
+            loadSummary();
+
+            // Attach event listeners
+            document.getElementById('phoneForm').addEventListener('submit', addPhone);
+            document.getElementById('accessoryForm').addEventListener('submit', addAccessory);
+
+            // Retry connection every 5 seconds if not connected
+            setInterval(wakeUpBackend, 5000);
+        });
+    </script>
+</body>
+</html>
